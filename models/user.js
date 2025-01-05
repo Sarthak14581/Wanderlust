@@ -13,6 +13,8 @@ const userSchema = new Schema({
     }
 })
 
+
+// this is required because it create username and  password with salting and hashing automatically
 userSchema.plugin(passportLocalMongoose);
 
 module.exports = new mongoose.model("user", userSchema);

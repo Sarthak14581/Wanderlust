@@ -21,8 +21,9 @@ router
 .route("/login")
 .get( userController.renderLoginForm)
 .post(
-    saveRedirectUrl,
+    saveRedirectUrl,      //strategy local
      passport.authenticate("local", {
+        // options
          failureRedirect: "/login",
          failureFlash: true
     }),

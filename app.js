@@ -10,6 +10,7 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError");
 const session = require("express-session");
+const MongoStore = require('connect-mongo');
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
@@ -23,12 +24,17 @@ const listingRouter = require("./routes/listing");
 const reviewRouter = require("./routes/review");
 const userRouter = require("./routes/user");
       
+const dburl = process.env.ATLASDB_URL;
+
 main()
 .then(() => {console.log("connected to db")})
 .catch((err) => console.log(err));      
 
+// const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+
+
 async function main() {
-    await mongoose.connect('mongodb://127.0.0.1:27017/wanderlust');
+    await mongoose.connect(dburl);
 }  
 
 app.engine("ejs", ejsMate);
@@ -38,9 +44,21 @@ app.use(express.urlencoded({extended: true}));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
+const store = MongoStore.create({
+    mongoUrl:dburl,
+    crypto: {
+        secret: process.env.SECRETE
+    },
+    touchAfter: 24*3600
+});
+
+store.on("error", () => {
+    console.log("ERROR in MONGO SESSION STORE", err);
+})
 
 const sessionOpts = {
-    secret: "mysupersecretcode",
+    store, 
+    secret: process.env.SECRETE, // secrete used to sign the session id cookie.  
     resave: false,
     saveUninitialized: true, 
     cookie: {
@@ -51,12 +69,13 @@ const sessionOpts = {
 };
        
 
-app.get("/", (req, res) => {
-    res.send("Hello i am root");
-})
+// app.get("/", (req, res) => {
+//     res.send("Hello i am root");
+// })
 
 
-app.use(session(sessionOpts));
+
+app.use(session(sessionOpts)); // use session as middleware
 app.use(flash());
 
 app.use(passport.initialize());
@@ -67,7 +86,7 @@ app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()))
 
 passport.serializeUser(User.serializeUser());  //store user related info in the session 
-passport.deserializeUser(User.deserializeUser());
+passport.deserializeUser(User.deserializeUser()); // remove user related information 
 
 
     
@@ -85,10 +104,10 @@ app.use("/", userRouter);
         
 
 
-// app.all("*", (req, res, next) => {
-//     next(new ExpressError(404, "Page not found"));
-// })
-
+app.all("*", (req, res, next) => {
+    next(new ExpressError(404, "Page not found"));
+}) 
+ 
 app.use((err, req, res, next) => {
     let {status=500, message="Something got wrong"} = err;
     console.log(err);

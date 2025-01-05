@@ -8,7 +8,7 @@ module.exports.isLoggedIn = (req, res, next) => {
     if(!req.isAuthenticated()) {
         // if user is not logged then we will redirect it to the redirectUrl 
         // (the url on which user forced to the login page)
-        req.session.redirectUrl = req.originalUrl;
+        req.session.redirectUrl = req.originalUrl;     //original url is the absolute path user want to access currently
 
         req.flash("error", "You will need to log in");
         return res.redirect("/login");
@@ -19,6 +19,7 @@ module.exports.isLoggedIn = (req, res, next) => {
 
 
 module.exports.saveRedirectUrl = (req, res, next) => {
+    // we save the url in the locals because passport resets the session when user is logged in 
     if(req.session.redirectUrl) {
         res.locals.redirectUrl = req.session.redirectUrl;
     }
