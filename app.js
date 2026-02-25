@@ -69,10 +69,6 @@ const sessionOpts = {
 };
        
 
-// app.get("/", (req, res) => {
-//     res.send("Hello i am root");
-// })
-
 
 
 app.use(session(sessionOpts)); // use session as middleware
@@ -96,6 +92,10 @@ app.use((req, res, next) => {
     res.locals.error = req.flash("error");
     res.locals.currUser = req.user;
     next();
+})
+
+app.get("/", (req, res) => {
+    res.redirect("/listings");
 })
 
 app.use("/listings", listingRouter);
